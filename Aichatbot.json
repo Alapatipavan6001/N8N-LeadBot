@@ -1,0 +1,786 @@
+{
+  "name": "QA - AI Chatbot 2025 v1.0.8",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "739e818c-cbcb-44d8-801a-962dee60d3e9",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "recorded",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        160
+      ],
+      "id": "ccb98fbf-bff4-468f-8a97-21ed68a0f4ca",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1w1qxo8MjOXKT_9KMn3OvykWvkeTimahU5gv-pYE_BOY",
+          "mode": "list",
+          "cachedResultName": "Leadinfo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w1qxo8MjOXKT_9KMn3OvykWvkeTimahU5gv-pYE_BOY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w1qxo8MjOXKT_9KMn3OvykWvkeTimahU5gv-pYE_BOY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $('extractingdata').first().json.name }}",
+            "email": "={{ $('extractingdata').first().json.email }}",
+            "mobile": "={{ $('extractingdata').first().json.mobile }}"
+          },
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mobile",
+              "displayName": "mobile",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1920,
+        256
+      ],
+      "id": "aa6c1ddd-ab38-4554-a431-a3a92e13d147",
+      "name": "Lead Info",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "HXHmxsaQZLfcuCuC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputEmail = $items(\"extractingdata\")[0]?.json?.email?.toLowerCase();\n\nif (!inputEmail) {\n  throw new Error(\"❌ Email not found in 'extractingdata' node\");\n}\n\n// Get all contacts from HubSpot 'get' node\nconst hubspotContacts = $items(\"get\");\n\nfor (let contact of hubspotContacts) {\n  const properties = contact.json.properties;\n\n  if (!Array.isArray(properties)) continue;\n\n  for (let prop of properties) {\n    if (prop?.type === \"EMAIL\") {\n      const contactEmail = prop?.value?.toLowerCase();\n      \n      if (contactEmail === inputEmail) {\n        return [\n          {\n            json: {\n              leadExists: true,\n              matchedContactId: contact.json.id || null,\n              matchedContact: contact.json\n            }\n          }\n        ];\n      }\n    }\n  }\n}\n\n// No match found\nreturn [\n  {\n    json: {\n      leadExists: false\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        256
+      ],
+      "id": "a79b925d-2f85-4f51-8aa8-65d20dcd95ad",
+      "name": "checking _lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2f8b5b6a-b2ed-42a8-a4f4-ff7e79633e2b",
+              "leftValue": "={{ $json.leadExists }}",
+              "rightValue": "\"false\"",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        256
+      ],
+      "id": "de4e3595-979a-475c-aec3-ceda381e2aef",
+      "name": "if"
+    },
+    {
+      "parameters": {
+        "jsCode": "const outputString = $json[\"output\"];\n\nconst nameMatch = outputString.match(/Name:\\s*(.+)/);\nconst emailMatch = outputString.match(/Email:\\s*([^\\s]+)/);\nconst mobileMatch = outputString.match(/Mobile:\\s*([\\d.\\-]+)/);\n\nconst name = nameMatch ? nameMatch[1].trim() : null;\nconst email = emailMatch ? emailMatch[1].trim() : null;\nconst mobile = mobileMatch ? mobileMatch[1].trim() : null;\n\nreturn [\n  {\n    json: {\n      name,\n      email,\n      mobile\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        256
+      ],
+      "id": "1129f58e-94b9-4f0c-81e5-c8d2a2cc0b79",
+      "name": "extractingdata"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6cd65385-002f-4f95-a22d-36d39a35d8e0",
+              "name": "output",
+              "value": "={{ $('AI Agent').first().json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2752,
+        256
+      ],
+      "id": "72587533-8471-48be-9b36-dbe1a8325809",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "fileName": "leads.csv",
+        "parentId": "01JKPMKSF3UAFGU65M3RDZB5VCR4BY7A6P",
+        "binaryData": true
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1,
+      "position": [
+        2384,
+        256
+      ],
+      "id": "05d36340-94b0-444f-b87e-ebdd07f44348",
+      "name": "Upload a file",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "5UL4myoMin1FyYpG",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://docs.google.com/spreadsheets/d/1w1qxo8MjOXKT_9KMn3OvykWvkeTimahU5gv-pYE_BOY/edit?usp=sharing",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2144,
+        256
+      ],
+      "id": "ccfda788-43ae-4d29-acac-a3565008c647",
+      "name": "converting spreadsheet to csv"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "getAll",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1024,
+        256
+      ],
+      "id": "009ec765-8768-41f3-be7a-2468180394aa",
+      "name": "get",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "y1Rj0CdqWnXv8cfH",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $('extractingdata').first().json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('extractingdata').first().json.name }}",
+          "phoneNumber": "={{ $('extractingdata').first().json.mobile }}"
+        },
+        "options": {
+          "resolveData": false
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1696,
+        256
+      ],
+      "id": "8c097b8e-ec8c-481c-b798-899b6eaf2147",
+      "name": "Create or update a contact",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "y1Rj0CdqWnXv8cfH",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Welcome to 360DMMC AI Chatbot. \nStart off by saying \"Hi\" and I will connect you to our Virtual AI Agent.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        160
+      ],
+      "id": "f861cb92-8b58-4f1d-baaa-059d601730dc",
+      "name": "When chat message received",
+      "webhookId": "86214b5a-36b3-4b46-8f5c-eb6cd3e862f9",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "toRecipients": "consult@360dmmc.com",
+        "subject": "New_lead(testin N8N)",
+        "bodyContent": "=Hello Team,\n\nA new lead has arrived.\n\nName: {{ $('extractingdata').first().json.name }}\nEmail:  {{ $('extractingdata').first().json.email }}\nPhone:{{ $('extractingdata').first().json.mobile }}\n\nPlease follow up as soon as possible. ",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        2560,
+        256
+      ],
+      "id": "e1682e3d-4ce2-4632-89f2-76b6a6408315",
+      "name": "Send a message",
+      "webhookId": "f1b99956-abc3-4d5f-b0f4-f9857a833a2f",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "uPmvcoJGUlGZdrMU",
+          "name": "Consult@360dmmc.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4defc3f9-8628-49f5-9bf2-0b3d47ae9f8f",
+              "leftValue": "={{ $('When chat message received').item.json.chatInput }}",
+              "rightValue": "^INV-\\d{4,}$",
+              "operator": {
+                "type": "string",
+                "operation": "notRegex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        64
+      ],
+      "id": "91ee2064-e3b0-4ec6-8c85-65e5ef0ac7db",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3f456561-2e7d-4961-9c16-e04afc43bcd9",
+              "name": "output",
+              "value": "={{ $('When chat message received').item.json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        64
+      ],
+      "id": "7903d330-14ba-417e-8030-febc3a66ca9a",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/invoices/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authorization",
+              "value": "Bearer pat-na2-7dc5d2f2-4a2c-496a-ac0b-6b37f551f6ed"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"hs_number\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.output }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\n    \"hs_invoice_status\",\n    \"hs_amount_billed\",\n    \"hs_pdf_download_link\"\n  ],\n  \"limit\": 1\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1248,
+        64
+      ],
+      "id": "ac2d397b-6152-46b6-9057-feec564c70e8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "28b9a45c-5351-4928-87c8-ae791961fd2b",
+              "name": "inoviceid",
+              "value": "={{ $json.results[0].id }}",
+              "type": "string"
+            },
+            {
+              "id": "caffe673-f106-4ac8-96c0-cf55840f7c10",
+              "name": "amount total",
+              "value": "={{ $json.results[0].properties.hs_amount_billed }}",
+              "type": "string"
+            },
+            {
+              "id": "32ce6ef7-cd77-48a7-82f1-5f2d1ec8407f",
+              "name": "pdf",
+              "value": "={{ $json.results[0].properties.hs_pdf_download_link }}",
+              "type": "string"
+            },
+            {
+              "id": "bd3ed526-8ea8-4269-b394-c56169b40b5d",
+              "name": "status",
+              "value": "={{ $json.results[0].properties.hs_invoice_status }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        64
+      ],
+      "id": "0fef8f35-58e6-48b4-9cc4-4b5e22efee39",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoiceId = $json.inoviceid;\nconst amount = $json[\"amount total\"];\nconst pdf = $json.pdf;\nconst status = $json.status;\n\n// If any of the critical fields are missing → return static message\nif (!invoiceId || !amount || !status || !pdf) {\n  return [{\n    json: {\n      message: \"Invoice number not found. Please try again.\"\n    }\n  }];\n}\n\n// Otherwise, build the formatted message\nconst lines = [\n  \"Thanks for the info! Below are the invoice details:\",\n  \"\",\n  `Invoice ID: ${invoiceId}`,\n  \"\",\n  `Amount Total: $${amount}`,\n  \"\",\n  `Status: ${status}`,\n  \"\",\n  `Invoice Link: ${pdf}`\n];\n\nreturn [{\n  json: {\n    message: lines.join('\\n')\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        64
+      ],
+      "id": "98cf2971-4f09-49ca-940b-459c5b8188e4",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "content": "version 1.0.8 Features:\n\n-24/7 Lead generation\n-New Lead email notifications\n-Multilingual\n-Calendar appointment scheduling with Microsoft Bookings\n-FAQ's\n-CRM Integration with HubSpot\n-Contact updates to HubSpot for new leads\n-Invoice status updates with HubSpot\n-Contact Backups into OneDrive\n-IT Support ticketing with JIRA\n-Customized web widget\n\n",
+        "height": 432,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "88d1e95c-a553-44f4-9f82-a5f3b74030f1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful virtual assistant for 360dmmc. When someone says \"Hi\" or \"Hello\" respond back with:\n\n\"Hello! 👋 My name is Lucy. How can I assist you today?\n\nSay \"Contact Sales\"📞\n\nBook an [Appointment](https://outlook.office.com/book/ScheduleaMeetingwithUs@360dmmc.com/?ismsaljsauthenabled)?📅\n\nNeed [IT Support](https://360dmmc.atlassian.net/servicedesk/customer/portal/1 )?👨‍💻 \n\nCheck status on an invoice 🧾 (Please enter your invoice number in the format: INV-xxxx)\n\nor ask me anything.  You can also speak to me in your language\"\n\nYou are a virtual assistant for 360DMMC.\n\nIf a user asks you to \"Contact Sales\", Your task is to collect the following details one-by-one:  \n1. Full Name\n2. Email Address\n3. Phone Number including area code  \n\nAsk each question politely, and wait for the user's reply before asking the next. After collecting each answer, store them in memory using the keys: `name`, `email`, and `mobile`.\n\nOnce all three are collected, display a confirmation message like this:\n\"Great! Your details have been successfully recorded:  \n\n- Name: {{$json.name}}\n- Email: {{$json.email}}\n- Mobile: {{$json.mobile}}  \n\nThank you for providing your information. A member of the 360DMMC team will contact you soon. If you would like to schedule a meeting that fits your schedule, please go to our bookings page [here](https://outlook.office.com/book/ScheduleaMeetingwithUs@360dmmc.com/?ismsaljsauthenabled). Do you have any other questions?\"\n\nImportant: Do not skip any steps. Always ask for full name, then email, then phone.\n\nOnce you have gathered the information details of the user then you can perform the following:\n\n1. If someone wants to schedule an appointment to speak with someone, tell them \"You can also book a meeting that fits your schedule on our bookings page by clicking [here](https://outlook.office.com/book/ScheduleaMeetingwithUs@360dmmc.com/?ismsaljsauthenabled)\"\n\n2. If the user is experiencing a technical issue with their product or need to talk to someone from IT or need to open a new service ticket with IT, be empathetic to the user's situation and tell them to \"If you are experiencing a technical issue or are in need of support, please submit a [Service Ticket](https://360dmmc.atlassian.net/servicedesk/customer/portal/1) and an IT Support Representative will contact you as soon as possible!\"\n\n## 1. Frequently Asked Questions\n\nHere is a list of questions and answers that you can respond with:\n- Q: What services and/or products do you provide?\n\nA: At 360DMMC, we combine cutting-edge AI technology with human creativity to offer comprehensive, full-lifecycle digital transformation services. Our solutions include:\n\nAI-Driven Digital Solutions: Efficient automation and intelligent tools that revamp operations and fuel innovation.\n\nStrategic Media Content Creation: AI-enhanced storytelling, content designed to elevate your brand and engage your audience.\n\nAI-Powered Marketing Strategies: Data-driven planning and execution using AI analytics to optimize targeting, campaign performance, and ROI.\n360dmmc.com\n\nElevated Customer Experience (CX): Empathy-driven design combined with AI insights to improve every touchpoint and foster loyalty.\n360dmmc.com\n\nOur approach is truly integrated—we’re with you from initial concept to implementation and beyond, ensuring sustainable, adaptive growth for your business. Learn more at [360DMMC.com](https://360dmmc.com/what-we-do/). \nYou can also check out our product offerings [here](https://360dmmc.com/products-and-pricing/)\n\n- Q: Can you build a website for my business?\nA: Absolutely! We can design and build a professional, mobile-friendly website for your business. Our team can handle everything from layout and branding to content creation, SEO optimization, and ongoing maintenance—so you have a site that not only looks great but also drives results. Please [contact us](consult@360dmmc.com) for a free consultation. \n\n- Q: Do you provide traditional marketing services?\nA: Yes! In addition to AI-powered solutions, we can also provide traditional marketing services such as print advertising, direct mail campaigns, event promotions, and local media outreach. We can even integrate these with digital strategies for a blended marketing approach. Please [contact us](consult@360dmmc.com) for a free consultation.\n\n- Q: I'm new to AI techonology but I want to use it in my business. Where do I start?\nA: That’s exciting! A great first step is to identify one or two areas in your business where AI can save time or improve efficiency—like customer support, data analysis, or marketing personalization. From there, explore AI tools tailored for small businesses, starting with something low-cost and easy to implement, like an AI chatbot for your website. You can then scale up as you see results. [Book an appointment](https://outlook.office.com/book/ScheduleaMeetingwithUs@360dmmc.com/?ismsaljsauthenabled) to speak with a team member.\n\n- Q: Where is your office located?\nA: We are headquartered in Chicago, Illinois, and work virtually with clients nationwide. If you’d like to send us mail, please address it to: 1 East Erie St., Suite 525-2501, Chicago, IL 60611\n\n- Q: What are your pricing plans?\nA: Our Pricing Plans page is still being developed. You will be able to find them on [360dmmc.com](www.360dmmc.com) once it is published. You can check [here](https://360dmmc.com/products-and-pricing/) as well\n\n- Q: What products or services do you provide?\nA: We offer many customized and scalable AI driven solutions, workflow automation, and products to fit the need of your business. You can find out more [here](https://360dmmc.com/what-we-do/)\n\n- Q: Do you have any pricing information?\nA: Our pricing is based on a number of factors as all of our solutions are customized for your business.  \nWould you like to schedule a [free consultation](https://outlook.office.com/book/ScheduleaMeetingwithUs@360dmmc.com/?ismsaljsauthenabled)?\nYou can also check out our product offerings [here](https://360dmmc.com/products-and-pricing/)\n\n- Q: What Products do you have?\nA: You can find our product listing on our website at [360dmmc.com](https://360dmmc.com/products-and-pricing/) or click [here](https://360dmmc.com/products-and-pricing/)\n\n- Q: What are your pricing plans?\nA: You can check out our pricing plans for the products that we currently provide by clicking [here](https://360dmmc.com/products-and-pricing/). For custom workflow automation and development work, please contact a sales representative at consult@360dmmc.com. Would you like to speak to a Sales Representative?  Say \"Contact Sales\"\n\n- Q: Do you have a price listing?\nA: For price listings on the current products we offer, you can find them by clicking [here](https://360dmmc.com/products-and-pricing/). For customized workflow automation and development work, please contact us at consult@360dmmc.com for more information.\nWould you like to speak to a Sales representative?  Say \"Contact Sales\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        160
+      ],
+      "id": "0ed29da9-763b-4eb9-9446-7addc91740bf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        464
+      ],
+      "id": "9f45292b-87f5-40bd-ba53-d167ed75e449",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XOVzItT2767z8kP8",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 30
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        464
+      ],
+      "id": "1c5b9df8-ae4f-43f7-8653-c8ad9f5041e9",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        384,
+        464
+      ],
+      "id": "fc07d108-9906-4f45-8665-b32f8f433864",
+      "name": "Calculator"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "extractingdata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Info": {
+      "main": [
+        [
+          {
+            "node": "converting spreadsheet to csv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "checking _lead": {
+      "main": [
+        [
+          {
+            "node": "if",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extractingdata": {
+      "main": [
+        [
+          {
+            "node": "get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "converting spreadsheet to csv": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get": {
+      "main": [
+        [
+          {
+            "node": "checking _lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a contact": {
+      "main": [
+        [
+          {
+            "node": "Lead Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        []
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c344b613-b048-4172-8d36-fda8bab039dd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcf92cc579a6d1a2cfbdb560f504f87e252dde28a4bf86a53bbe8f919d0f692e"
+  },
+  "id": "ztWSzOOtOIOuYaCp",
+  "tags": [
+    {
+      "createdAt": "2025-08-25T12:10:15.470Z",
+      "updatedAt": "2025-08-25T12:10:15.470Z",
+      "id": "6yifKfobMxU63aID",
+      "name": "QA"
+    }
+  ]
+}
